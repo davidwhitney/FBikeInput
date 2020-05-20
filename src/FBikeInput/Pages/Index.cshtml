@@ -35,6 +35,7 @@
 
     var map;
     var panorama;
+
     function initMap() {
         const position = { lat: currentLat, lng: currentLong };
         map = new window.google.maps.Map(mapTarget, { center: position, zoom: 18 });
@@ -47,15 +48,15 @@
         currentLat = lat;
 
         const position = { lat: currentLat, lng: currentLong };
-        map.panTo(position);
-
         const panorama = new google.maps.StreetViewPanorama(panoramaTarget, { position, pov });
+
+        map.panTo(position);
         map.setStreetView(panorama);
     }
 
     var connection = new signalR.HubConnectionBuilder().withUrl("/fbikeHub").build();
     connection.on("RotationDetected", averageVolume => {
-        var newLat = currentLat += 0.0005;
+        var newLat = currentLat += 0.00005;
         updateLongLat(currentLong, newLat);
     });
 
