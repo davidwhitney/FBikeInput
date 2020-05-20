@@ -1,5 +1,4 @@
 ﻿using System;
-using FBikeInput;
 using NUnit.Framework;
 
 namespace FBikeInput.Test.Unit
