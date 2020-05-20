@@ -7,8 +7,6 @@ namespace FBikeInput
 {
     public class Program
     {
-        private static int _selectedDeviceId;
-
         public static void Main(string[] args)
         {
             if (WaveIn.DeviceCount == 0)
@@ -22,24 +20,25 @@ namespace FBikeInput
                 Console.WriteLine("Device {0}: {1}, {2} channels", waveInDevice, deviceInfo.ProductName, deviceInfo.Channels);
             }
 
+            var selectedDeviceId = 0;
             if (WaveIn.DeviceCount > 1)
             {
                 Console.Write("Enter the ID of the input device to listen on: ");
                 var input = Console.ReadKey();
-                int.TryParse(input.KeyChar.ToString(), out _selectedDeviceId);
+                int.TryParse(input.KeyChar.ToString(), out selectedDeviceId);
                 Console.WriteLine("");
             }
 
             Console.WriteLine("Listening");
 
-            Host.CreateDefaultBuilder(args)
+            var webServer = Host.CreateDefaultBuilder(args)
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
-                    webBuilder.UseSetting("DeviceId", _selectedDeviceId.ToString());
+                    webBuilder.UseSetting("DeviceId", selectedDeviceId.ToString());
                     webBuilder.UseStartup<Startup>();
-                }).Build().Run();
+                }).Build();
 
-            Console.ReadKey();
+            webServer.Run();
         }
     }
 }

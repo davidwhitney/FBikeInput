@@ -1,6 +1,5 @@
 ﻿using System;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -14,16 +13,13 @@ namespace FBikeInput
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddRazorPages();
-            services.AddServerSideBlazor();
+            services.AddSignalR();
             services.AddSingleton<FBikeMonitor>();
+            services.AddSingleton<FBikeHub>();
         }
 
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, FBikeMonitor monitor)
+        public void Configure(IApplicationBuilder app, FBikeHub hub, FBikeMonitor monitor)
         {
-            // monitor.SampleProcessed += (e, average) => { Console.WriteLine($"{average}"); };
-            monitor.OneRotationDetected += (e, average) => { Console.WriteLine($"Rotate! {average}"); };
-            monitor.Monitor(Configuration.GetValue<int>("DeviceId"));
-
             app.UseDeveloperExceptionPage();
             app.UseHttpsRedirection();
             app.UseStaticFiles();
@@ -31,9 +27,17 @@ namespace FBikeInput
 
             app.UseEndpoints(endpoints =>
             {
-                endpoints.MapBlazorHub();
-                endpoints.MapFallbackToPage("/_Host");
+                endpoints.MapRazorPages();
+                endpoints.MapHub<FBikeHub>("/fbikeHub");
             });
+
+            monitor.OneRotationDetected += (e, average) =>
+            {
+                Console.WriteLine($"Rotation detected because average was: {average}");
+                hub.RotationDetected(average);
+            };
+
+            monitor.Monitor(Configuration.GetValue<int>("DeviceId"));
         }
     }
 }

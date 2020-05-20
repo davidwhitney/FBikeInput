@@ -1,0 +1,68 @@
+﻿@page "/"
+@using Microsoft.Extensions.Configuration
+@namespace FBikeInput.Pages
+@inject IConfiguration Configuration
+@{
+    var apiKey = Configuration.GetValue<string>("GoogleMapsKey");
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FBike Monitor</title>
+    <link rel="stylesheet" href="~/css/site.css">
+
+    <script src="~/js/signalr/dist/browser/signalr.js"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=@(apiKey)&callback=initMap" async defer></script>
+
+    <base href="~/" />
+</head>
+<body>
+<app>
+    <div id="map" style="width: 1024px; height: 400px;"></div>
+    <div id="panorama" style="width: 1024px; height: 800px;"></div>
+</app>
+
+<script async defer>
+    var currentLong = 12.550343;
+    var currentLat = 55.665957;
+    var pov = { heading: 0, pitch: 10 };
+
+    var mapTarget = document.getElementById("map");
+    var panoramaTarget = document.getElementById("panorama");
+
+    var map;
+    var panorama;
+    function initMap() {
+        const position = { lat: currentLat, lng: currentLong };
+        map = new window.google.maps.Map(mapTarget, { center: position, zoom: 18 });
+        panorama = new window.google.maps.StreetViewPanorama(panoramaTarget, { position, pov });
+        map.setStreetView(panorama);
+    }
+
+    function updateLongLat(long, lat) {
+        currentLong = long;
+        currentLat = lat;
+
+        const position = { lat: currentLat, lng: currentLong };
+        map.panTo(position);
+
+        const panorama = new google.maps.StreetViewPanorama(panoramaTarget, { position, pov });
+        map.setStreetView(panorama);
+    }
+
+    var connection = new signalR.HubConnectionBuilder().withUrl("/fbikeHub").build();
+    connection.on("RotationDetected", averageVolume => {
+        var newLat = currentLat += 0.0005;
+        updateLongLat(currentLong, newLat);
+    });
+
+    connection.start();
+
+</script>
+
+
+</body>
+</html>
